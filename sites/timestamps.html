@@ -201,7 +201,7 @@
         </div>
         <div class="form-group">
             <label for="time-input">Time</label>
-            <input type="time" id="time-input">
+            <input type="time" id="time-input" step="1">
         </div>
     </div>
 
@@ -266,8 +266,8 @@
         'R': 'Relative',
     };
 
-    function updateFormatExamples() {
-        const now = new Date();
+    function updateFormatExamples(date) {
+        const targetDate = date || new Date();
         Array.from(typeSelect.options).forEach(option => {
             const type = option.value;
             if (!typeDescriptions[type]) return;
@@ -275,10 +275,11 @@
             let example;
             if (type === 'R') {
                 const formatter = new Intl.RelativeTimeFormat('en-US', typeFormats[type] || {});
-                example = formatter.format(-2, 'years');
+                const format = automaticRelativeDifference(targetDate);
+                example = formatter.format(format.duration, format.unit);
             } else {
                 const formatter = new Intl.DateTimeFormat('en-US', typeFormats[type] || {});
-                example = formatter.format(now);
+                example = formatter.format(targetDate);
             }
             option.textContent = `${typeDescriptions[type]} (${example})`;
         });
@@ -317,17 +318,26 @@
 
         const dateParts = dateInput.value.split('-');
         const timeParts = timeInput.value.split(':');
+        const seconds = timeParts[2] ? parseInt(timeParts[2]) : 0;
         
         const selectedDate = new Date(
             parseInt(dateParts[0]),
             parseInt(dateParts[1]) - 1,
             parseInt(dateParts[2]),
             parseInt(timeParts[0]),
-            parseInt(timeParts[1])
+            parseInt(timeParts[1]),
+            seconds
         );
 
         const ts = Math.floor(selectedDate.getTime() / 1000);
         const formatType = typeSelect.value;
+
+        // Toggle seconds input visibility/precision
+        if (formatType === 'T' || formatType === 'R') {
+            timeInput.step = "1";
+        } else {
+            timeInput.step = "60";
+        }
         
         outputInput.value = `<t:${ts}:${formatType}>`;
 
@@ -340,6 +350,8 @@
             const formatter = new Intl.DateTimeFormat('en-US', typeFormats[formatType] || {});
             previewContent.textContent = formatter.format(selectedDate);
         }
+
+        updateFormatExamples(selectedDate);
     }
 
     function copyToClipboard() {
@@ -364,13 +376,13 @@
         const dd = String(now.getDate()).padStart(2, '0');
         dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-        // Format for input type="time" (HH:MM)
+        // Format for input type="time" (HH:MM:SS)
         const hh = String(now.getHours()).padStart(2, '0');
         const min = String(now.getMinutes()).padStart(2, '0');
-        timeInput.value = `${hh}:${min}`;
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        timeInput.value = `${hh}:${min}:${ss}`;
 
         updateOutput();
-        updateFormatExamples();
     }
 
     // Event Listeners
