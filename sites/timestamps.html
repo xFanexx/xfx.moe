@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Timestamp Generator</title>
+    <style>
+        :root {
+            --bg-color: #202225;
+            --card-bg: #36393f;
+            --text-color: #dcddde;
+            --accent-color: #5865F2;
+            --accent-hover: #4752c4;
+            --input-bg: #202225;
+            --border-color: #202225;
+            --success-color: #3ba55c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: Arial, Helvetica, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        p.description {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #b9bbbe;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #8e9297;
+        }
+
+        input[type="date"],
+        input[type="time"],
+        select,
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: #fff;
+            font-family: inherit;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .row > div {
+            flex: 1;
+        }
+
+        .preview-box {
+            background-color: #2f3136;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .preview-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #8e9297;
+            margin-bottom: 0.25rem;
+        }
+
+        #preview-content {
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .output-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #code-output {
+            font-family: "Consolas", "Courier New", monospace;
+            background-color: #202225;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+            color: #fff;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: #4f545c;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background-color: #686d73;
+        }
+        
+        /* Toast notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--success-color);
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        @media (max-width: 400px) {
+            .row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Discord Timestamp Generator</h1>
+    <p class="description">Create dynamic timestamps for your Discord messages.</p>
+
+    <div class="row">
+        <div class="form-group">
+            <label for="date-input">Date</label>
+            <input type="date" id="date-input">
+        </div>
+        <div class="form-group">
+            <label for="time-input">Time</label>
+            <input type="time" id="time-input">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="type-select">Format</label>
+        <select id="type-select">
+            <option value="t">Short Time (16:20)</option>
+            <option value="T">Long Time (16:20:30)</option>
+            <option value="d">Short Date (20/04/2021)</option>
+            <option value="D">Long Date (20 April 2021)</option>
+            <option value="f">Short Date + Time (20 April 2021 16:20)</option>
+            <option value="F">Long Date + Time (Tuesday, 20 April 2021 16:20)</option>
+            <option value="R" selected>Relative (2 years ago)</option>
+        </select>
+    </div>
+
+    <div class="preview-box">
+        <div class="preview-label">Preview</div>
+        <div id="preview-content">Loading...</div>
+    </div>
+
+    <div class="form-group">
+        <label for="code-output">Output Code</label>
+        <div class="output-group">
+            <input type="text" id="code-output" readonly title="Click to copy">
+            <button id="copy-btn" class="btn-primary">Copy</button>
+        </div>
+    </div>
+
+    <button id="reset-btn" class="btn-secondary">Reset to Current Time</button>
+</div>
+
+<div id="toast">Copied to clipboard!</div>
+
+<script>
+    const dateInput = document.getElementById('date-input');
+    const timeInput = document.getElementById('time-input');
+    const typeSelect = document.getElementById('type-select');
+    const outputInput = document.getElementById('code-output');
+    const previewContent = document.getElementById('preview-content');
+    const copyBtn = document.getElementById('copy-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const toast = document.getElementById('toast');
+
+    const typeFormats = {
+        't': { timeStyle: 'short' },
+        'T': { timeStyle: 'medium' },
+        'd': { dateStyle: 'short' },
+        'D': { dateStyle: 'long' },
+        'f': { dateStyle: 'long', timeStyle: 'short' },
+        'F': { dateStyle: 'full', timeStyle: 'short' },
+        'R': { style: 'long', numeric: 'auto' },
+    };
+
+    const typeDescriptions = {
+        't': 'Short Time',
+        'T': 'Long Time',
+        'd': 'Short Date',
+        'D': 'Long Date',
+        'f': 'Short Date + Time',
+        'F': 'Long Date + Time',
+        'R': 'Relative',
+    };
+
+    function updateFormatExamples() {
+        const now = new Date();
+        Array.from(typeSelect.options).forEach(option => {
+            const type = option.value;
+            if (!typeDescriptions[type]) return;
+            
+            let example;
+            if (type === 'R') {
+                const formatter = new Intl.RelativeTimeFormat('en-US', typeFormats[type] || {});
+                example = formatter.format(-2, 'years');
+            } else {
+                const formatter = new Intl.DateTimeFormat('en-US', typeFormats[type] || {});
+                example = formatter.format(now);
+            }
+            option.textContent = `${typeDescriptions[type]} (${example})`;
+        });
+    }
+
+    function showToast() {
+        toast.className = "show";
+        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+    }
+
+    function automaticRelativeDifference(d) {
+        const diff = -((new Date().getTime() - d.getTime())/1000)|0;
+        const absDiff = Math.abs(diff);
+        
+        if (absDiff > 86400*30*10) {
+            return { duration: Math.round(diff/(86400*365)), unit: 'years' };
+        }
+        if (absDiff > 86400*25) {
+            return { duration: Math.round(diff/(86400*30)), unit: 'months' };
+        }
+        if (absDiff > 3600*21) {
+            return { duration: Math.round(diff/86400), unit: 'days' };
+        }
+        if (absDiff > 60*44) {
+            return { duration: Math.round(diff/3600), unit: 'hours' };
+        }
+        if (absDiff > 30) {
+            return { duration: Math.round(diff/60), unit: 'minutes' };
+        }
+        return { duration: diff, unit: 'seconds' };
+    }
+
+    function updateOutput() {
+        // Construct date from inputs
+        if (!dateInput.value || !timeInput.value) return;
+
+        const dateParts = dateInput.value.split('-');
+        const timeParts = timeInput.value.split(':');
+        
+        const selectedDate = new Date(
+            parseInt(dateParts[0]),
+            parseInt(dateParts[1]) - 1,
+            parseInt(dateParts[2]),
+            parseInt(timeParts[0]),
+            parseInt(timeParts[1])
+        );
+
+        const ts = Math.floor(selectedDate.getTime() / 1000);
+        const formatType = typeSelect.value;
+        
+        outputInput.value = `<t:${ts}:${formatType}>`;
+
+        // Update Preview
+        if (formatType === 'R') {
+            const formatter = new Intl.RelativeTimeFormat('en-US', typeFormats[formatType] || {});
+            const format = automaticRelativeDifference(selectedDate);
+            previewContent.textContent = formatter.format(format.duration, format.unit);
+        } else {
+            const formatter = new Intl.DateTimeFormat('en-US', typeFormats[formatType] || {});
+            previewContent.textContent = formatter.format(selectedDate);
+        }
+    }
+
+    function copyToClipboard() {
+        outputInput.select();
+        outputInput.setSelectionRange(0, 99999); /* For mobile devices */
+        
+        navigator.clipboard.writeText(outputInput.value).then(() => {
+            showToast();
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            // Fallback
+            document.execCommand('copy');
+            showToast();
+        });
+    }
+
+    function setNow() {
+        const now = new Date();
+        // Format for input type="date" (YYYY-MM-DD)
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+        // Format for input type="time" (HH:MM)
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hh}:${min}`;
+
+        updateOutput();
+        updateFormatExamples();
+    }
+
+    // Event Listeners
+    dateInput.addEventListener('change', updateOutput);
+    timeInput.addEventListener('change', updateOutput);
+    typeSelect.addEventListener('change', updateOutput);
+    
+    copyBtn.addEventListener('click', copyToClipboard);
+    outputInput.addEventListener('click', function() {
+        this.select();
+    });
+
+    resetBtn.addEventListener('click', setNow);
+
+    // Initialize
+    setNow();
+
+</script>
+
+</body>
+</html>
