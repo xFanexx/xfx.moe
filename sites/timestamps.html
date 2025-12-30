@@ -171,7 +171,7 @@
             transform: translateX(-50%);
             font-size: 1rem;
             opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s;
+            transition: opacity .3s, visibility .3s, bottom .3s;
         }
 
         #toast.show {
@@ -266,24 +266,6 @@
         'R': 'Relative',
     };
 
-    function updateFormatExamples(date) {
-        const targetDate = date || new Date();
-        Array.from(typeSelect.options).forEach(option => {
-            const type = option.value;
-            if (!typeDescriptions[type]) return;
-            
-            let example;
-            if (type === 'R') {
-                const formatter = new Intl.RelativeTimeFormat('en-US', typeFormats[type] || {});
-                const format = automaticRelativeDifference(targetDate);
-                example = formatter.format(format.duration, format.unit);
-            } else {
-                const formatter = new Intl.DateTimeFormat('en-US', typeFormats[type] || {});
-                example = formatter.format(targetDate);
-            }
-            option.textContent = `${typeDescriptions[type]} (${example})`;
-        });
-    }
 
     function showToast() {
         toast.className = "show";
@@ -350,8 +332,6 @@
             const formatter = new Intl.DateTimeFormat('en-US', typeFormats[formatType] || {});
             previewContent.textContent = formatter.format(selectedDate);
         }
-
-        updateFormatExamples(selectedDate);
     }
 
     function copyToClipboard() {
